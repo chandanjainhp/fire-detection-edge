@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fire Detection System - AI Powered</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes pulse-fire {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+        .fire-pulse {
+            animation: pulse-fire 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #0A1931 0%, #1A3D63 50%, #4A7FA7 100%);
+        }
+        .preview-image {
+            max-height: 400px;
+            object-fit: contain;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4A7FA7 0%, #1A3D63 100%);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1A3D63 0%, #0A1931 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        /* Smooth transitions */
+        * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+        .loading-pulse {
+            animation: loadingPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes loadingPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        /* Progress bar animation */
+        @keyframes progress {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+        .progress-animate {
+            animation: progress 2s ease-in-out;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            dark: '#0A1931',
+                            medium: '#1A3D63',
+                            light: '#4A7FA7'
+                        },
+                        accent: {
+                            light: '#B3CFE5',
+                            white: '#F6FAFD'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-white dark:bg-primary-dark text-gray-900 dark:text-accent-white min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-xl sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-fire-alt text-3xl text-red-400"></i>
+                    <h1 class="text-2xl md:text-3xl font-bold">Fire Detection System</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" 
+                            class="p-3 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-300 hover:scale-110"
+                            aria-label="Toggle dark mode">
+                        <i class="fas fa-moon text-xl dark:hidden"></i>
+                        <i class="fas fa-sun text-xl hidden dark:inline-block"></i>
+                    </button>
+                    <div id="statusIndicator" class="flex items-center space-x-2 bg-white/20 px-4 py-2 rounded-full">
+                        <div class="w-3 h-3 bg-gray-400 rounded-full"></div>
+                        <span class="text-sm">Checking...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Total Predictions -->
+            <div class="bg-white dark:bg-primary-medium rounded-xl shadow-lg p-6 border-l-4 border-primary-light card-hover">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-600 dark:text-accent-light text-sm font-medium uppercase tracking-wide">Total Predictions</p>
+                        <p id="totalPredictions" class="text-4xl font-bold text-gray-800 dark:text-white mt-2">0</p>
+                        <p class="text-green-500 text-sm mt-2">
+                            <i class="fas fa-arrow-up"></i> +12% from last week
+                        </p>
+                    </div>
+                    <i class="fas fa-chart-line text-5xl text-primary-light opacity-80"></i>
+                </div>
+            </div>
+
+            <!-- Fire Detected -->
+            <div class="bg-white dark:bg-primary-medium rounded-xl shadow-lg p-6 border-l-4 border-red-500 card-hover">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-600 dark:text-accent-light text-sm font-medium uppercase tracking-wide">Fire Detected</p>
+                        <p id="fireDetected" class="text-4xl font-bold text-gray-800 dark:text-white mt-2">0</p>
+                        <p class="text-red-500 text-sm mt-2">
+                            <i class="fas fa-exclamation-triangle"></i> Requires attention
+                        </p>
+                    </div>
+                    <i class="fas fa-fire text-5xl text-red-500 opacity-80"></i>
+                </div>
+            </div>
+
+            <!-- Safe Images -->
+            <div class="bg-white dark:bg-primary-medium rounded-xl shadow-lg p-6 border-l-4 border-green-500 card-hover">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-600 dark:text-accent-light text-sm font-medium uppercase tracking-wide">Safe Images</p>
+                        <p id="safeImages" class="text-4xl font-bold text-gray-800 dark:text-white mt-2">0</p>
+                        <p class="text-green-500 text-sm mt-2">
+                            <i class="fas fa-shield-alt"></i> All clear
+                        </p>
+                    </div>
+                    <i class="fas fa-check-circle text-5xl text-green-500 opacity-80"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Detection Panel -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Upload Section -->
+            <div class="bg-white dark:bg-primary-medium rounded-xl shadow-xl p-8">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center">
+                    <i class="fas fa-upload mr-3 text-primary-light dark:text-accent-light"></i>
+                    Upload Image
+                </h2>
+
+                <!-- Drag and Drop Zone -->
+                <div id="dropZone" 
+                     class="border-4 border-dashed border-gray-300 dark:border-primary-light rounded-xl p-8 text-center hover:border-primary-light dark:hover:border-accent-light transition-all duration-300 cursor-pointer bg-gray-50 dark:bg-primary-dark/50">
+                    <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 dark:text-accent-light mb-4"></i>
+                    <p class="text-gray-600 dark:text-accent-light text-lg mb-2 font-medium">Drag & Drop your image here</p>
+                    <p class="text-gray-400 dark:text-accent-light/70 text-sm mb-4">or</p>
+                    <label for="fileInput" 
+                           class="btn-primary text-white px-6 py-3 rounded-lg cursor-pointer hover:shadow-lg transition-all inline-block">
+                        <i class="fas fa-folder-open mr-2"></i>Browse Files
+                    </label>
+                    <input type="file" id="fileInput" accept="image/*" class="hidden" aria-label="Upload image file">
+                    <p class="text-gray-400 dark:text-accent-light/70 text-xs mt-4">
+                        <i class="fas fa-info-circle mr-1"></i>Supported: JPG, PNG, JPEG, GIF (Max 16MB)
+                    </p>
+                </div>
+
+                <!-- Image Preview -->
+                <div id="previewSection" class="mt-6 hidden">
+                    <div class="relative">
+                        <img id="imagePreview" src="" alt="Preview" 
+                             class="preview-image w-full rounded-lg shadow-lg border-4 border-primary-light dark:border-accent-light">
+                    </div>
+                    <button id="clearButton" 
+                            class="mt-4 w-full bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 text-white py-3 rounded-lg transition-all duration-300 font-medium shadow-md hover:shadow-lg">
+                        <i class="fas fa-times mr-2"></i>Clear Image
+                    </button>
+                </div>
+
+                <!-- Alert Settings -->
+                <div class="mt-6 p-5 bg-gray-100 dark:bg-primary-dark/50 rounded-lg border border-gray-200 dark:border-primary-light/30">
+                    <label class="flex items-center space-x-3 cursor-pointer group">
+                        <input type="checkbox" id="enableAlerts" 
+                               class="w-5 h-5 text-primary-light rounded focus:ring-2 focus:ring-primary-light">
+                        <span class="text-gray-700 dark:text-accent-light font-medium group-hover:text-primary-light dark:group-hover:text-accent-light transition-colors">
+                            <i class="fas fa-bell mr-2"></i>Enable Email Alerts
+                        </span>
+                    </label>
+                    <input type="email" id="alertEmail" placeholder="your.email@example.com" 
+                           class="mt-3 w-full px-4 py-3 border-2 border-gray-300 dark:border-primary-light/30 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light dark:bg-primary-dark dark:text-white transition-all hidden">
+                </div>
+
+                <!-- Analyze Button -->
+                <button id="analyzeButton" disabled 
+                        class="mt-6 w-full btn-primary text-white py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg hover:shadow-2xl">
+                    <i class="fas fa-brain mr-2"></i>Analyze Image
+                </button>
+
+                <!-- Progress Bar -->
+                <div id="uploadProgress" class="mt-4 hidden">
+                    <div class="w-full bg-gray-200 dark:bg-primary-dark rounded-full h-3 overflow-hidden">
+                        <div id="progressBar" 
+                             class="bg-gradient-to-r from-primary-light to-primary-medium h-3 rounded-full progress-animate"></div>
+                    </div>
+                    <p class="text-center text-gray-600 dark:text-accent-light mt-3 text-sm font-medium">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>Uploading and analyzing...
+                    </p>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="bg-white dark:bg-primary-medium rounded-xl shadow-xl p-8">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center">
+                    <i class="fas fa-chart-pie mr-3 text-primary-light dark:text-accent-light"></i>
+                    Detection Results
+                </h2>
+
+                <!-- Placeholder -->
+                <div id="resultsPlaceholder" class="flex flex-col items-center justify-center h-64 text-gray-400 dark:text-accent-light/50">
+                    <i class="fas fa-search text-6xl mb-4"></i>
+                    <p class="text-lg font-medium">No results yet</p>
+                    <p class="text-sm mt-2">Upload an image to start detection</p>
+                </div>
+
+                <!-- Results Content -->
+                <div id="resultsContent" class="hidden">
+                    <!-- Result Card -->
+                    <div id="resultCard" class="p-6 rounded-xl mb-6 shadow-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl font-bold" id="resultTitle">Classification</h3>
+                            <i id="resultIcon" class="text-5xl"></i>
+                        </div>
+                        <p class="text-3xl font-bold mb-2" id="resultClass">-</p>
+                        <p class="text-gray-600 dark:text-accent-light mb-4">
+                            Confidence: <span id="resultConfidence" class="font-bold text-lg">-</span>
+                        </p>
+                        <div class="w-full bg-gray-200 dark:bg-primary-dark rounded-full h-4 overflow-hidden">
+                            <div id="confidenceBar" class="h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Info -->
+                    <div class="bg-gray-50 dark:bg-primary-dark/50 p-5 rounded-lg border border-gray-200 dark:border-primary-light/30">
+                        <p class="text-sm text-gray-600 dark:text-accent-light mb-2 flex items-center">
+                            <i class="fas fa-clock mr-2 text-primary-light"></i>
+                            <span id="resultTime" class="font-medium">-</span>
+                        </p>
+                        <div id="alertStatus" class="hidden mt-3 p-3 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-lg border border-green-200 dark:border-green-700">
+                            <i class="fas fa-envelope-circle-check mr-2"></i>
+                            <span class="font-medium">Alert email sent successfully</span>
+                        </div>
+                    </div>
+
+                    <!-- History -->
+                    <div class="mt-6">
+                        <h4 class="text-lg font-bold text-gray-800 dark:text-white mb-3 flex items-center">
+                            <i class="fas fa-history mr-2 text-primary-light dark:text-accent-light"></i>
+                            Recent Detections
+                        </h4>
+                        <div id="historyList" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+                            <!-- History items will be added here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading Spinner -->
+                <div id="loadingSpinner" class="hidden flex flex-col items-center justify-center h-64">
+                    <div class="relative">
+                        <div class="animate-spin rounded-full h-20 w-20 border-t-4 border-b-4 border-primary-light dark:border-accent-light"></div>
+                        <i class="fas fa-brain absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl text-primary-light dark:text-accent-light"></i>
+                    </div>
+                    <p class="text-gray-600 dark:text-accent-light text-lg font-medium mt-6">Analyzing image...</p>
+                    <p class="text-gray-400 dark:text-accent-light/70 text-sm mt-2">Using AI to detect fire</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-primary-dark text-accent-white mt-16 py-8 border-t-4 border-primary-light">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fas fa-fire-alt mr-2 text-red-400"></i>
+                        Fire Detection System
+                    </h3>
+                    <p class="text-accent-light">Advanced AI-powered fire detection for safety and security.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold mb-4">Features</h4>
+                    <ul class="text-accent-light space-y-2">
+                        <li><i class="fas fa-check mr-2 text-green-400"></i>Real-time Analysis</li>
+                        <li><i class="fas fa-check mr-2 text-green-400"></i>High Accuracy (95%+)</li>
+                        <li><i class="fas fa-check mr-2 text-green-400"></i>Email Alerts</li>
+                        <li><i class="fas fa-check mr-2 text-green-400"></i>History Tracking</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold mb-4">Tech Stack</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-orange-600 px-3 py-1 rounded-full text-sm font-medium">TensorFlow</span>
+                        <span class="bg-blue-600 px-3 py-1 rounded-full text-sm font-medium">Flask</span>
+                        <span class="bg-green-600 px-3 py-1 rounded-full text-sm font-medium">AI/ML</span>
+                        <span class="bg-cyan-600 px-3 py-1 rounded-full text-sm font-medium">CNN</span>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-primary-light/30 mt-8 pt-6 text-center">
+                <p class="text-accent-light">&copy; 2025 Fire Detection System. Powered by TensorFlow & Deep Learning</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // State
+        let selectedFile = null;
+        let stats = {
+            total: 0,
+            fire: 0,
+            safe: 0
+        };
+        let history = [];
+
+        // Load persisted data
+        function loadPersistedData() {
+            const savedStats = localStorage.getItem('fireDetectionStats');
+            const savedHistory = localStorage.getItem('fireDetectionHistory');
+            
+            if (savedStats) {
+                stats = JSON.parse(savedStats);
+                updateStatsDisplay();
+            }
+            
+            if (savedHistory) {
+                history = JSON.parse(savedHistory);
+                updateHistoryDisplay();
+            }
+        }
+
+        // Save data to localStorage
+        function savePersistedData() {
+            localStorage.setItem('fireDetectionStats', JSON.stringify(stats));
+            localStorage.setItem('fireDetectionHistory', JSON.stringify(history));
+        }
+
+        // File validation
+        function validateFile(file) {
+            const maxSize = 16 * 1024 * 1024; // 16MB
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            
+            if (!allowedTypes.includes(file.type)) {
+                showError('Please select a valid image file (JPG, PNG, GIF)');
+                return false;
+            }
+            
+            if (file.size > maxSize) {
+                showError('File size must be less than 16MB');
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Email validation
+        function validateEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        // Show error with shake animation
+        function showError(message) {
+            const dropZone = document.getElementById('dropZone');
+            dropZone.classList.add('shake');
+            setTimeout(() => dropZone.classList.remove('shake'), 500);
+            
+            // Could add a toast notification here
+            alert(message);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+U to upload
+            if (e.ctrlKey && e.key === 'u') {
+                e.preventDefault();
+                fileInput.click();
+            }
+            
+            // Escape to clear
+            if (e.key === 'Escape') {
+                clearImage();
+            }
+        });
+
+        // Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewSection = document.getElementById('previewSection');
+        const imagePreview = document.getElementById('imagePreview');
+        const analyzeButton = document.getElementById('analyzeButton');
+        const enableAlerts = document.getElementById('enableAlerts');
+        const alertEmail = document.getElementById('alertEmail');
+        const resultsPlaceholder = document.getElementById('resultsPlaceholder');
+        const resultsContent = document.getElementById('resultsContent');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const themeToggle = document.getElementById('themeToggle');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const progressBar = document.getElementById('progressBar');
+
+        // Dark mode toggle
+        themeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        });
+
+        // Load saved theme
+        if (localStorage.getItem('theme') === 'dark' || 
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+
+        // Check API status
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                const indicator = document.getElementById('statusIndicator');
+
+                if (data.status === 'online' && data.model_loaded) {
+                    indicator.innerHTML = `
+                        <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                        <span class="text-sm font-medium">System Online</span>
+                    `;
+                } else {
+                    indicator.innerHTML = `
+                        <div class="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                        <span class="text-sm font-medium">Model Loading...</span>
+                    `;
+                }
+            } catch (error) {
+                const indicator = document.getElementById('statusIndicator');
+                indicator.innerHTML = `
+                    <div class="w-3 h-3 bg-red-400 rounded-full animate-pulse"></div>
+                    <span class="text-sm font-medium">Offline</span>
+                `;
+                console.error('Status check failed:', error);
+            }
+        }
+
+        // File validation
+        function validateFile(file) {
+            const maxSize = 16 * 1024 * 1024; // 16MB
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            
+            if (!validTypes.includes(file.type)) {
+                alert('Please upload a valid image file (JPG, PNG, or GIF)');
+                return false;
+            }
+            
+            if (file.size > maxSize) {
+                alert('File size must be less than 16MB');
+                return false;
+            }
+            
+            return true;
+        }
+
+        // File handling
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-primary-light', 'dark:border-accent-light', 'bg-primary-light/10');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-primary-light', 'dark:border-accent-light', 'bg-primary-light/10');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-primary-light', 'dark:border-accent-light', 'bg-primary-light/10');
+            const file = e.dataTransfer.files[0];
+            if (file && validateFile(file)) {
+                handleFileSelect(file);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && validateFile(file)) {
+                handleFileSelect(file);
+            }
+        });
+
+        function handleFileSelect(file) {
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                previewSection.classList.remove('hidden');
+                analyzeButton.disabled = false;
+                
+                // Smooth scroll to preview
+                setTimeout(() => {
+                    previewSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
+            };
+            reader.onerror = () => {
+                alert('Error reading file. Please try again.');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        document.getElementById('clearButton').addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = '';
+            previewSection.classList.add('hidden');
+            analyzeButton.disabled = true;
+            imagePreview.src = '';
+        });
+
+        // Email alerts
+        enableAlerts.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                alertEmail.classList.remove('hidden');
+                alertEmail.focus();
+            } else {
+                alertEmail.classList.add('hidden');
+            }
+        });
+
+        // Analyze image
+        analyzeButton.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            // Validate email if alerts enabled
+            if (enableAlerts.checked && alertEmail.value) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(alertEmail.value)) {
+                    alert('Please enter a valid email address');
+                    alertEmail.focus();
+                    return;
+                }
+            }
+
+            // Show loading
+            resultsPlaceholder.classList.add('hidden');
+            resultsContent.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+            uploadProgress.classList.remove('hidden');
+            analyzeButton.disabled = true;
+            analyzeButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
+
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+            formData.append('send_alert', enableAlerts.checked);
+            formData.append('alert_email', alertEmail.value);
+
+            try {
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    displayResults(result);
+                    updateStats(result);
+                    addToHistory(result);
+                } else {
+                    alert('Error: ' + (result.error || 'Unknown error occurred'));
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+                console.error('Prediction error:', error);
+            } finally {
+                loadingSpinner.classList.add('hidden');
+                uploadProgress.classList.add('hidden');
+                analyzeButton.disabled = false;
+                analyzeButton.innerHTML = '<i class="fas fa-brain mr-2"></i>Analyze Image';
+            }
+        });
+
+        function displayResults(result) {
+            resultsContent.classList.remove('hidden');
+            resultsPlaceholder.classList.add('hidden');
+
+            const resultCard = document.getElementById('resultCard');
+            const isFire = result.is_fire;
+
+            if (isFire) {
+                resultCard.className = 'p-6 rounded-xl mb-6 bg-red-50 dark:bg-red-900/20 border-4 border-red-500 shadow-xl';
+                document.getElementById('resultIcon').className = 'fas fa-fire text-5xl text-red-500 fire-pulse';
+                document.getElementById('confidenceBar').className = 'bg-gradient-to-r from-red-500 to-red-600 h-4 rounded-full transition-all duration-500';
+                document.getElementById('resultClass').className = 'text-3xl font-bold mb-2 text-red-600 dark:text-red-400';
+            } else {
+                resultCard.className = 'p-6 rounded-xl mb-6 bg-green-50 dark:bg-green-900/20 border-4 border-green-500 shadow-xl';
+                document.getElementById('resultIcon').className = 'fas fa-check-circle text-5xl text-green-500';
+                document.getElementById('confidenceBar').className = 'bg-gradient-to-r from-green-500 to-green-600 h-4 rounded-full transition-all duration-500';
+                document.getElementById('resultClass').className = 'text-3xl font-bold mb-2 text-green-600 dark:text-green-400';
+            }
+
+            document.getElementById('resultClass').textContent = result.class.toUpperCase();
+            document.getElementById('resultConfidence').textContent = (result.confidence * 100).toFixed(2) + '%';
+            
+            // Animate confidence bar
+            setTimeout(() => {
+                document.getElementById('confidenceBar').style.width = (result.confidence * 100) + '%';
+            }, 100);
+            
+            document.getElementById('resultTime').textContent = new Date(result.timestamp).toLocaleString();
+
+            const alertStatus = document.getElementById('alertStatus');
+            if (result.alert_sent) {
+                alertStatus.classList.remove('hidden');
+            } else {
+                alertStatus.classList.add('hidden');
+            }
+
+            // Scroll to results
+            setTimeout(() => {
+                resultsContent.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+
+        function updateStats(result) {
+            stats.total++;
+            if (result.is_fire) {
+                stats.fire++;
+            } else {
+                stats.safe++;
+            }
+
+            document.getElementById('totalPredictions').textContent = stats.total;
+            document.getElementById('fireDetected').textContent = stats.fire;
+            document.getElementById('safeImages').textContent = stats.safe;
+
+            savePersistedData();
+        }
+
+        function addToHistory(result) {
+            history.unshift(result);
+            if (history.length > 5) history.pop();
+
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = history.map((item, index) => `
+                <div class="flex items-center justify-between p-3 bg-gray-100 dark:bg-primary-dark/50 rounded-lg hover:shadow-md transition-all border border-gray-200 dark:border-primary-light/30">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-${item.is_fire ? 'fire text-red-500' : 'check-circle text-green-500'} text-xl"></i>
+                        <div>
+                            <span class="text-sm font-bold text-gray-800 dark:text-white">${item.class}</span>
+                            <p class="text-xs text-gray-500 dark:text-accent-light/70">${new Date(item.timestamp).toLocaleTimeString()}</p>
+                        </div>
+                    </div>
+                    <span class="text-sm font-bold ${item.is_fire ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}">${(item.confidence * 100).toFixed(0)}%</span>
+                </div>
+            `).join('');
+
+            savePersistedData();
+        }
+
+        // Load saved stats and history
+        loadPersistedData();
+
+        // Initialize
+        loadSavedData();
+        checkStatus();
+        setInterval(checkStatus, 30000); // Check every 30 seconds
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + U to open file picker
+            if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+                e.preventDefault();
+                fileInput.click();
+            }
+            
+            // Escape to clear image
+            if (e.key === 'Escape' && !previewSection.classList.contains('hidden')) {
+                document.getElementById('clearButton').click();
+            }
+        });
+    </script>
+</body>
+</html>

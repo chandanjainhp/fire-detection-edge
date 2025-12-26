@@ -1,1 +1,9 @@
- pip install numpy pandas tensorflow scikit-learn matplotlib
+flask==3.0.0
+flask-cors==4.0.0
+tensorflow==2.17.0
+numpy==1.26.4
+pillow==10.1.0
+matplotlib==3.8.0
+werkzeug==3.0.1
+scipy==1.16.3
+efficientnet==1.1.1
