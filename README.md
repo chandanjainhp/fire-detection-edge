@@ -6,10 +6,9 @@ I've already created a comprehensive README.md file for you! Here it is formatte
 
 **AI-powered fire detection that runs on Raspberry Pi with zero internet dependency**
 
-[
-[![TensorFlow Lite](ense: MIT](https://img.shields.io/badge/License-MIT-greenelcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg> A lightweight, optimized deep learning model for real-time fire detection on resource-constrained edge devices. Works completely offline with just 30MB total footprint and 1.2MB model size.
+A lightweight, optimized deep learning model for real-time fire detection on resource-constrained edge devices. Works completely offline with just 30MB total footprint and 1.2MB model size.
 
-![Model Performance](docs/images/accuracy_chart.jpg 🎯 **93.2% Accuracy** - Reliable fire detection with minimal false positives
+- 🎯 **93.2% Accuracy** - Reliable fire detection with minimal false positives
 - ⚡ **82ms Inference** - Real-time processing on Raspberry Pi 4 (12 FPS)
 - 💾 **1.2MB Model** - 440× smaller than VGG16, 14× smaller than standard MobileNetV2
 - 📶 **Fully Offline** - No internet required after installation
